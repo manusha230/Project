@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>Document</title>
+    <script>
+    
+	    function onReady() {
+	    	fetchProducts();
+	    };
+	    
+        var ROOT_URI = 'http://localhost:8080/api/products';
+        function doAction(event) {
+            event.preventDefault();
+            var id = event.target.id.value;
+            var name = event.target.name.value;
+            var description = event.target.description.value;
+            var price = event.target.price.value;
+            var quantity = event.target.quantity.value;
+
+            var body = JSON.stringify({ name, description, price, quantity });
+            var headers = { 'content-type': 'application/json' }
+			var request = { method: 'POST', body, headers };
+            var URL = ROOT_URI;
+            
+            if(Number(id)) {
+            	body = JSON.stringify({ id, name, description, price, quantity });
+            	request = { method: 'PUT', body, headers };
+            	URL = ROOT_URI + "/" + id;
+            }
+            
+            fetch(URL, request)
+            .then(res=> res.ok ? res.json(): null)
+            .then(product => window.location.reload())
+            .catch(err => {
+                console.log(err);
+                alert('Something went wrong please try again');
+            })
+            return false;
+        }
+        
+        function fetchProducts() {
+            fetch(ROOT_URI, { method: "GET", })
+                .then((response) => response.json())
+             .then((result) => {
+                 for(product of result) {
+                     renderProducts(product);
+                 }
+             })
+             .catch((error) => console.error(error));
+        }
+        
+        function onDelete(id) {
+        	 fetch(ROOT_URI+"/"+id, { method: "DELETE" })
+             .then(response => window.location.reload())
+             .catch((error) => alert('Delete Failed'));
+        }
+        
+        function onEdit(product) {
+        	var p = product; //JSON.parse(product);
+        	console.log(p);
+        	document.getElementById('fid').value = p.id;
+        	document.getElementById('fname').value = p.name;
+        	document.getElementById('fdescription').value = p.description;
+        	document.getElementById('fprice').value = p.price;
+        	document.getElementById('fquantity').value = p.quantity;
+        	document.getElementById('submit').value = 'Update';
+        	console.log('done')
+        }
+
+        function renderProducts(product) {
+            var productTemplate = document.getElementById('productTemplate');
+            var clone = document.importNode(productTemplate.content, true);
+
+            // Modify the cloned content
+            clone.querySelector('#id').textContent = product.id;
+            clone.querySelector('#id').setAttribute('data-id',product.id);
+            clone.querySelector('#name').textContent = product.name;
+            clone.querySelector('#name').setAttribute('data-name',product.name);
+            clone.querySelector('#description').textContent = product.description;
+            clone.querySelector('#description').setAttribute('data-description',product.description);
+            clone.querySelector('#price').textContent = product.price;
+            clone.querySelector('#price').setAttribute('data-price',product.price);
+            clone.querySelector('#quantity').textContent = product.quantity;
+            clone.querySelector('#quantity').setAttribute('data-quantity',product.quantity);
+            clone.querySelector('#edit').setAttribute('onclick',"onEdit("+JSON.stringify(product)+")");            
+            clone.querySelector('#delete').setAttribute('onclick',"onDelete("+product.id+")");            
+
+            document.querySelector('#productsTable').appendChild(clone);
+        }
+    </script>
+</head>
+
+<body onload="onReady()">
+   <form onsubmit="return doAction(event)" action="POST">
+        <input type="hidden" name="id" value="0" id="fid"/>
+        <div><label for="fname">Name:</label><input type="text" name="name" id="fname" required></div>
+        <div><label for="fdescription">Description</label><input type="text" name="description" id="fdescription"></div>
+        <div><label for="fprice">Price</label><input type="number" name="price" id="fprice" required></div>
+        <div><label for="fquantity">Quantity</label><input type="number" name="quantity" id="fquantity" required></div>
+        <div><input type="submit" value="Save" id="submit"> <input type="reset" value="Clear"></div>
+   </form>
+
+   <template id="productTemplate">
+        <tr>
+            <td id="id"></td>
+            <td id="name"></td>
+            <td id="description"></td>
+            <td id="price"></td>
+            <td id="quantity"></td>
+            <td><a href="#" id="edit">EDIT</a></td>
+            <td><a href="#" id="delete">DELETE</a></td>
+        </tr>
+    </template>
+    
+     <h3>Products</h3>
+     <div id="productsTableDiv"></div>
+     <table id="productsTable" border="1">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>EDIT</th>
+                <th>DELETE</th>
+            </tr>
+     </table>
+ </body>
+ </html>
